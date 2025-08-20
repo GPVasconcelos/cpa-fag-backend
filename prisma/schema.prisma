@@ -1,0 +1,165 @@
+// prisma/schema.prisma
+
+// 1. Configuração do Cliente e da Fonte de Dados
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Carrega a URL do arquivo .env
+}
+
+// 2. Definição dos Modelos (Entidades)
+
+// Enum para os tipos de usuário, para garantir consistência
+enum TipoUsuario {
+  ALUNO
+  COORDENADOR
+  ADMIN
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String   // Adicionei um campo para a senha hasheada
+  tipo      TipoUsuario
+  criadoEm  DateTime @default(now())
+
+  // Relacionamentos
+  cursoId   Int?
+  curso     Curso?   @relation(fields: [cursoId], references: [id])
+  turmaId   Int?
+  turma     Turma?   @relation(fields: [turmaId], references: [id])
+
+  formulariosCriados Formulario[] @relation("CriadoPor")
+  respostasDadas     Resposta[]
+  logsGerados        LogEvento[]
+
+  @@map("usuarios") // Mapeia este modelo para a tabela "usuarios" no DB
+}
+
+model Curso {
+  id    Int    @id @default(autoincrement())
+  nome  String @unique
+
+  // Relacionamentos
+  turmas   Turma[]
+  usuarios Usuario[]
+
+  formularios Formulario[] @relation("EscopoCurso")
+
+  @@map("cursos")
+}
+
+model Turma {
+  id   Int    @id @default(autoincrement())
+  nome String
+
+  // Relacionamentos
+  cursoId Int
+  curso   Curso @relation(fields: [cursoId], references: [id])
+
+  usuarios Usuario[]
+
+  @@map("turmas")
+}
+
+enum EscopoFormulario {
+  CURSO
+  INSTITUCIONAL
+}
+
+model Formulario {
+  id          Int       @id @default(autoincrement())
+  titulo      String
+  descricao   String?
+  escopo      EscopoFormulario
+  anonimo     Boolean   @default(false)
+  ativo       Boolean   @default(false)
+  inicioEm    DateTime?
+  fimEm       DateTime?
+  publicadoEm DateTime?
+  criadoEm    DateTime  @default(now())
+
+  // Relacionamentos
+  criadoPorId Int
+  criadoPor   Usuario @relation("CriadoPor", fields: [criadoPorId], references: [id])
+
+  cursoId Int?
+  curso   Curso? @relation("EscopoCurso", fields: [cursoId], references: [id])
+
+  perguntas Pergunta[]
+  respostas Resposta[]
+
+  @@map("formularios")
+}
+
+enum TipoPergunta {
+  TEXTO
+  PARAGRAFO
+  RADIO
+  CHECKBOX
+  DROPDOWN
+  ESCALA
+  GRADE
+  UPLOAD
+  DATA
+  HORA
+}
+
+model Pergunta {
+  id              Int          @id @default(autoincrement())
+  enunciado       String
+  tipo            TipoPergunta
+  obrigatoria     Boolean      @default(true)
+  ordem           Int
+  configuracaoJson Json?       // Opções, limites, etc.
+
+  // Relacionamentos
+  formularioId Int
+  formulario   Formulario @relation(fields: [formularioId], references: [id])
+  respostas    Resposta[]
+
+  @@map("perguntas")
+}
+
+model Resposta {
+  id        Int      @id @default(autoincrement())
+  valorJson Json
+  criadoEm  DateTime @default(now())
+
+  // Relacionamentos
+  formularioId Int
+  formulario   Formulario @relation(fields: [formularioId], references: [id])
+
+  perguntaId Int
+  pergunta   Pergunta @relation(fields: [perguntaId], references: [id])
+
+  // Relacionamento opcional com usuário (para formulários não anônimos)
+  usuarioId Int?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  // Chaves para agregação estatística
+  cursoId Int?
+  turmaId Int?
+
+  @@map("respostas")
+}
+
+model LogEvento {
+  id         Int      @id @default(autoincrement())
+  acao       String
+  entidade   String
+  entidadeId Int
+  antesJson  Json?
+  depoisJson Json?
+  criadoEm   DateTime @default(now())
+
+  // Relacionamentos
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("logs_eventos")
+}
