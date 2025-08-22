@@ -14,15 +14,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // Este método é chamado pelo Passport após verificar a assinatura do token.
-  // O 'payload' é o mesmo que definimos na função login().
   async validate(payload: any) {
-    // Aqui, podemos enriquecer o objeto 'request.user' com mais dados do banco, se necessário.
     const user = await this.usuariosService.findByEmail(payload.email);
     if (!user) {
       throw new UnauthorizedException();
     }
-    // O objeto retornado aqui será anexado ao objeto Request (ex: req.user)
-    return user;
+    return {
+      userId: user.id,
+      tipoUsuario: user.tipo,
+      cursoId: user.cursoId ?? null,
+      turmaId: user.turmaId ?? null,
+    };
   }
 }

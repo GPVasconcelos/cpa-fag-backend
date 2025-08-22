@@ -10,5 +10,9 @@ export class UsuariosService {
     return this.prisma.usuario.findUnique({ where: { email } });
   }
 
+  async findById(id: number) {
+    return this.prisma.usuario.findUnique({ where: { id } });
+  }
+
 
 }

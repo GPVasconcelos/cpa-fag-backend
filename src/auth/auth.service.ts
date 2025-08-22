@@ -1,37 +1,31 @@
-// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsuariosService } from 'src/modulos/usuarios/usuarios.service';
 import * as bcrypt from 'bcrypt';
+import { UsuariosService } from 'src/modulos/usuarios/usuarios.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usuariosService: UsuariosService,
-    private jwtService: JwtService,
+    private readonly usuariosService: UsuariosService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async login(email: string, senha: string) {
     const user = await this.usuariosService.findByEmail(email);
+    if (!user?.senha) throw new UnauthorizedException('Credenciais inválidas.');
 
-    // Compara a senha fornecida com o hash armazenado no banco
-    if (user && (await bcrypt.compare(pass, user.senha))) {
-      const { senha, ...result } = user; // Remove a senha do objeto de retorno
-      return result;
-    }
-    return null;
-  }
+    const ok = await bcrypt.compare(senha, user.senha);
+    if (!ok) throw new UnauthorizedException('Credenciais inválidas.');
 
-  async login(user: any) {
+    const { senha: _omit, ...safeUser } = user as any;
+
     const payload = {
-      sub: user.id, // 'sub' (subject) é a convenção para o ID do usuário
-      email: user.email,
-      tipoUsuario: user.tipo,
-      cursoId: user.cursoId,
+      sub: safeUser.id,
+      tipoUsuario: safeUser.tipo,
+      cursoId: safeUser.cursoId ?? null,
+      turmaId: safeUser.turmaId ?? null,
     };
 
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return { access_token: this.jwtService.sign(payload) };
   }
 }

@@ -6,11 +6,13 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from 'src/prisma/prisma.module'; // Importe o PrismaModule
 import { JwtStrategy } from './jwt.strategy'; // Criaremos este arquivo a seguir
+import { UsuariosModule } from 'src/modulos/usuarios/usuarios.module';
 
 @Module({
   imports: [
     PrismaModule, // Disponibiliza o PrismaService para o AuthService
     PassportModule,
+    UsuariosModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET, // Carrega o segredo do .env
       signOptions: { expiresIn: '1h' }, // Token expira em 1 hora (ex: '1h', '7d')
