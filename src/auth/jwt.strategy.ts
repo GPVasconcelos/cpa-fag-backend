@@ -21,6 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     return {
       userId: user.id,
+      email: user.email,
       tipoUsuario: user.tipo,
       cursoId: user.cursoId ?? null,
       turmaId: user.turmaId ?? null,

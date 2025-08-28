@@ -21,6 +21,7 @@ export class AuthService {
 
     const payload = {
       sub: safeUser.id,
+      email: safeUser.email,
       tipoUsuario: safeUser.tipo,
       cursoId: safeUser.cursoId ?? null,
       turmaId: safeUser.turmaId ?? null,

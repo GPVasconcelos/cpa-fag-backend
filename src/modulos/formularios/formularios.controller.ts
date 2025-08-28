@@ -41,8 +41,8 @@ export class FormulariosController {
   @Post(':id/ativar')
   @UseGuards(RolesGuard)
   @Roles('COORDENADOR', 'ADMIN')
-  async ativar(@Req() req: any, @Param() { id }: IdParamDto) {
-    return this.service.setAtivo(req.user, id, true);
+  async ativar(@Req() req: any, @Param('id') id: string) {
+    return this.service.setAtivo(req.user, Number(id), true);
   }
 
   @Post(':id/inativar')

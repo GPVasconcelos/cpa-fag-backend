@@ -37,18 +37,24 @@ export class RespostasService {
       throw new BadRequestException('Pergunta inválida para este formulário.');
     }
 
-    // parse do valor JSON
-    let valorJson: any;
-    try {
-      valorJson = JSON.parse(dto.valor);
-    } catch {
-      throw new BadRequestException('valor deve ser um JSON válido (string).');
-    }
+ 
+      let valorJson: any = dto.valor;
+      if (typeof valorJson === 'string') {
+        try {
+          valorJson = JSON.parse(valorJson);
+        } catch {
+        }
+      }
 
-    if (pergunta.obrigatoria && (valorJson === null || valorJson === '' ||
-        (typeof valorJson === 'object' && Object.keys(valorJson).length === 0))) {
-      throw new BadRequestException('Resposta obrigatória não preenchida.');
-    }
+      if (pergunta.obrigatoria) {
+        const isEmptyObject =
+          typeof valorJson === 'object' && valorJson !== null && !Array.isArray(valorJson) && Object.keys(valorJson).length === 0;
+        const isEmptyArray = Array.isArray(valorJson) && valorJson.length === 0;
+        const isEmptyString = typeof valorJson === 'string' && valorJson.trim() === '';
+        if (valorJson === null || isEmptyObject || isEmptyArray || isEmptyString) {
+          throw new BadRequestException('Resposta obrigatória não preenchida.');
+        }
+      }
 
     return this.prisma.resposta.create({
       data: {
